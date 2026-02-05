@@ -3,6 +3,7 @@ sandbox.ipynb
 __pycache__/
 *.py[codz]
 *$py.class
+trash
 
 # C extensions
 *.so
