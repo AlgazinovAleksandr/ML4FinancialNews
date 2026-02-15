@@ -5,6 +5,7 @@ __pycache__/
 *$py.class
 trash
 data_sample
+.DS_Store
 
 # C extensions
 *.so
