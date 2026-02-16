@@ -13,3 +13,13 @@ After that, run data/data_preprocesing.py in the folder with the decompressed .j
 python data_preprocesing.py
 ```
 By default, the output is saved into news_prices.csv
+
+### TODO:
+
+Build pipeline for multiple vectorizers - Oleg. At least 3-4 vectorizers including FinBERT or smth like this, transformer like BERT, tf-idf, tf-idf + svd, word2vec, etc
+
+Build regressor - Alex. Try multiple like boosting, RF, MLP, etc
+
+Obtain additional features like market caps, volatilities, volumes, risk-free rates, etc - Alex
+
+Think about explainability through SHAP (check references) - Alex
