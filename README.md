@@ -23,3 +23,5 @@ Build regressor - Alex. Try multiple like boosting, RF, MLP, etc
 Obtain additional features like market caps, volatilities, volumes, risk-free rates, etc - Alex
 
 Think about explainability through SHAP (check references) - Alex
+
+Do not forget to evaluate task-specific LLMs like https://github.com/Bavest/fin-llama for recommendations, and compare them with standard LLMs like GPT
