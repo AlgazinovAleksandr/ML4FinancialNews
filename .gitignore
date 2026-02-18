@@ -6,6 +6,7 @@ __pycache__/
 trash
 data_sample
 .DS_Store
+catboost_info
 
 # C extensions
 *.so

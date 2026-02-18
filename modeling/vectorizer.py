@@ -7,8 +7,12 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import Pipeline
 import torch
 from transformers import AutoTokenizer, AutoModel
+from sentence_transformers import SentenceTransformer
 from pathlib import Path
 
+def get_available_methods():
+    print("Available vectorization methods:")
+    return ['tf-idf', 'tf-idf-svd', 'word2vec', 'word2vec-tfidf', 'bert', 'finbert']
 
 def preprocess(text):
     text = text.lower()
@@ -18,16 +22,22 @@ def preprocess(text):
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-def vectorize(corpus, method):
+def preprocess_tokenize(corpus):
+    print("Preprocessing and tokenizing corpus")
     preprocessed = [preprocess(text) for text in corpus]
     tokenized = [text.split() for text in preprocessed]
+    print(f"Preprocessed {len(preprocessed)} documents")
+    return preprocessed, tokenized
 
+def vectorize(method, preprocessed, tokenized):
+    print(f"Vectorizing using method: {method}")
     if method == 'tf-idf':
+        print("Creating TF-IDF matrix")
         vectorizer = TfidfVectorizer(
             ngram_range=(1,2),
             max_df=0.9,
             min_df=5,
-            max_features=50000,
+            max_features=10000, # 50000
             sublinear_tf=True,
             norm='l2'
         )
@@ -35,14 +45,16 @@ def vectorize(corpus, method):
         return X, vectorizer
 
     elif method == 'tf-idf-svd':
+        print("Creating TF-IDF matrix with SVD")
         pipeline = Pipeline([
-            ('tfidf', TfidfVectorizer(ngram_range=(1,2), max_features=50000)),
+            ('tfidf', TfidfVectorizer(ngram_range=(1,2), max_features=10000)), # 50000
             ('svd', TruncatedSVD(n_components=300, random_state=42))
         ])
         X = pipeline.fit_transform(preprocessed)
         return X, pipeline
 
     elif method == 'word2vec':
+        print("Training Word2Vec model")
         model = Word2Vec(
                 vector_size=300,
                 window=5,
@@ -63,6 +75,7 @@ def vectorize(corpus, method):
         return X, model
 
     elif method == 'word2vec-tfidf':
+        print("I have no idea what this method is doing here but why not why not?")
         # train word2vec
         w2v_model = Word2Vec(
             sentences=tokenized,
@@ -103,24 +116,54 @@ def vectorize(corpus, method):
         ])
 
         return X, w2v_model
+
+    elif method == 'bert':
+        print('Love. Death. TRANSFORMERS')
+        if torch.backends.mps.is_available():
+            device = torch.device("mps")
+        elif torch.cuda.is_available():
+            device = torch.device("cuda")
+        else:
+            device = torch.device("cpu")
+        print(f"Using device: {device}")
+        print("Creating Sentence-BERT embeddings")
+        model = SentenceTransformer('all-MiniLM-L6-v2') # something lightweight so that the laptop does not die
+        X_sbert = model.encode(preprocessed, batch_size=32, show_progress_bar=True)
+        return X_sbert, model
     
     elif method == 'finbert':
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model_path = Path(__file__).parent / "finbert-pretrain"
-        model_path_str = str(model_path)
-
-        if not model_path.exists():
-            raise FileNotFoundError(f"FinBERT model directory not found at {model_path_str}")
-
+        print('That\'s what I call a spicy meatball!')
+        if torch.backends.mps.is_available():
+            device = torch.device("mps")
+        elif torch.cuda.is_available():
+            device = torch.device("cuda")
+        else:
+            device = torch.device("cpu")
+        print(f"Using device: {device}")
         try:
-            tokenizer = AutoTokenizer.from_pretrained(model_path_str, local_files_only=True, use_fast=False)
-        except Exception:
-            from transformers import BertTokenizer
-            tokenizer = BertTokenizer.from_pretrained(model_path_str, local_files_only=True)
+            model_name = "yiyanghkust/finbert-pretrain"
+            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            model = AutoModel.from_pretrained(model_name)
+            model.to(device)
+            model.eval()
+        except:
+            print("Could not load FinBERT from Hugging Face. Attempting local load...")
+            try:  
+                model_path = Path(__file__).parent / "finbert-pretrain"
+                model_path_str = str(model_path)
+                if not model_path.exists():
+                    raise FileNotFoundError(f"FinBERT model directory not found at {model_path_str}")
+                try:
+                    tokenizer = AutoTokenizer.from_pretrained(model_path_str, local_files_only=True, use_fast=False)
+                except Exception:
+                    from transformers import BertTokenizer
+                    tokenizer = BertTokenizer.from_pretrained(model_path_str, local_files_only=True)
 
-        model = AutoModel.from_pretrained(model_path_str, local_files_only=True)
-        model.to(device)
-        model.eval()
+                model = AutoModel.from_pretrained(model_path_str, local_files_only=True)
+                model.to(device)
+                model.eval()
+            except Exception as e:
+                print('Ну а кто сказал, что все будет легко...')
 
         def batch_embeddings(texts, batch_size=16):
             all_embeddings = []
@@ -152,14 +195,9 @@ def vectorize(corpus, method):
         return X, model
 
     else:
-        raise ValueError(f"Unknown method: {method}")
-    
-    
+        raise ValueError(f"Unknown method: {method}") 
 
-
-
-
-df = pd.read_csv("news_prices.csv")
-corpus = df["maintext"].dropna().astype(str).tolist()[:1000]
-print(vectorize(corpus, 'finbert'))
+# df = pd.read_csv("news_prices.csv")
+# corpus = df["maintext"].dropna().astype(str).tolist()[:1000]
+# print(vectorize(corpus, 'finbert'))
 
