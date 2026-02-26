@@ -175,6 +175,7 @@ cython_debug/
 modeling_iterations
 iterations
 CLAUDE.md
+presentation
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can

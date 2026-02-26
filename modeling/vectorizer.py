@@ -47,7 +47,7 @@ def vectorize(method, preprocessed, tokenized):
     elif method == 'tf-idf-svd':
         print("Creating TF-IDF matrix with SVD")
         pipeline = Pipeline([
-            ('tfidf', TfidfVectorizer(ngram_range=(1,2), max_features=10000)), # 50000
+            ('tfidf', TfidfVectorizer(ngram_range=(1,2), max_features=50000)), # 50000
             ('svd', TruncatedSVD(n_components=300, random_state=42))
         ])
         X = pipeline.fit_transform(preprocessed)
@@ -64,7 +64,7 @@ def vectorize(method, preprocessed, tokenized):
                 negative=10,
                 sample=1e-4,
                 epochs=10,
-                workers=4,
+                workers=6,
             )
 
         def doc_vector(tokens):
@@ -130,7 +130,7 @@ def vectorize(method, preprocessed, tokenized):
         print(f"Using device: {device}")
         print("Creating Sentence-BERT embeddings")
         model = SentenceTransformer('all-MiniLM-L6-v2') # something lightweight so that the laptop does not die
-        X_sbert = model.encode(preprocessed, batch_size=32, show_progress_bar=True)
+        X_sbert = model.encode(preprocessed, batch_size=48, show_progress_bar=True)
         return X_sbert, model
     
     elif method == 'finbert':
@@ -167,7 +167,7 @@ def vectorize(method, preprocessed, tokenized):
             except Exception as e:
                 print('Ну а кто сказал, что все будет легко...')
 
-        def batch_embeddings(texts, batch_size=32):
+        def batch_embeddings(texts, batch_size=48):
             all_embeddings = []
 
             for i in range(0, len(texts), batch_size):
@@ -194,7 +194,7 @@ def vectorize(method, preprocessed, tokenized):
             return np.vstack(all_embeddings)
 
         print("Creating FinBERT embeddings")
-        X = batch_embeddings(preprocessed, batch_size=32)
+        X = batch_embeddings(preprocessed, batch_size=48)
         return X, model
 
     else:
