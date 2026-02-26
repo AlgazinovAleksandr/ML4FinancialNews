@@ -16,12 +16,18 @@ By default, the output is saved into news_prices.csv
 
 ### TODO:
 
-Build pipeline for multiple vectorizers - Oleg. At least 3-4 vectorizers including FinBERT or smth like this, transformer like BERT, tf-idf, tf-idf + svd, word2vec, etc
++ Think about explainability through SHAP (check references)
 
-Build regressor - Alex. Try multiple like boosting, RF, MLP, etc
++ Chose the best regression model, try to convert the task to the classification one and check how it will work out
 
-Obtain additional features like market caps, volatilities, volumes, risk-free rates, etc - Alex
++ Check complex_eda.ipynb
 
-Think about explainability through SHAP (check references) - Alex
++ Do not forget to evaluate task-specific LLMs like https://github.com/Bavest/fin-llama for recommendations, and compare them with standard LLMs like GPT
 
-Do not forget to evaluate task-specific LLMs like https://github.com/Bavest/fin-llama for recommendations, and compare them with standard LLMs like GPT
+# References
+
+https://github.com/felixdrinkall/financial-news-dataset - take data from there
+
+https://www.kaggle.com/datasets/andrewmvd/sp-500-stocks - S&P 500 stocks and index itself additional info
+
+

@@ -56,13 +56,15 @@ def vectorize(method, preprocessed, tokenized):
     elif method == 'word2vec':
         print("Training Word2Vec model")
         model = Word2Vec(
+                sentences=tokenized,
                 vector_size=300,
                 window=5,
                 min_count=5,
                 sg=1,
                 negative=10,
                 sample=1e-4,
-                epochs=10
+                epochs=10,
+                workers=4,
             )
 
         def doc_vector(tokens):
@@ -165,7 +167,7 @@ def vectorize(method, preprocessed, tokenized):
             except Exception as e:
                 print('Ну а кто сказал, что все будет легко...')
 
-        def batch_embeddings(texts, batch_size=16):
+        def batch_embeddings(texts, batch_size=32):
             all_embeddings = []
 
             for i in range(0, len(texts), batch_size):
@@ -191,13 +193,10 @@ def vectorize(method, preprocessed, tokenized):
 
             return np.vstack(all_embeddings)
 
-        X = batch_embeddings(preprocessed, batch_size=16)
+        print("Creating FinBERT embeddings")
+        X = batch_embeddings(preprocessed, batch_size=32)
         return X, model
 
     else:
-        raise ValueError(f"Unknown method: {method}") 
-
-# df = pd.read_csv("news_prices.csv")
-# corpus = df["maintext"].dropna().astype(str).tolist()[:1000]
-# print(vectorize(corpus, 'finbert'))
+        raise ValueError(f"Unknown method: {method}")
 
