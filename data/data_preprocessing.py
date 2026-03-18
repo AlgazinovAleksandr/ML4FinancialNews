@@ -6,7 +6,7 @@ import json as _json
 def article_to_rows(article: dict) -> list[dict]:
     rows = []
 
-    # ---- extract high-confidence entity words (article-level) ----
+    # extract high-confidence entity words (article-level)
     entities = [
         ent["word"]
         for ent in article.get("named_entities", [])
@@ -17,8 +17,6 @@ def article_to_rows(article: dict) -> list[dict]:
     related = article.get("related_companies", [])
     industries = article.get("industries", [])
     
-    
-
     # serialize for CSV
     entities_json = _json.dumps(entities, ensure_ascii=False)
     mentioned_json = _json.dumps(mentioned, ensure_ascii=False)
@@ -71,7 +69,7 @@ def article_to_rows(article: dict) -> list[dict]:
 
     return rows
 
-
+# hi, how are you doing?
 
 def jsons_to_csv(output_csv="news_prices.csv"):
     all_rows = []
