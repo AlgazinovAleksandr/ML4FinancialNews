@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock News Analyzer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0f172a;
+    --surface:   #1e293b;
+    --border:    #334155;
+    --text:      #e2e8f0;
+    --muted:     #94a3b8;
+    --accent:    #38bdf8;
+    --green:     #22c55e;
+    --red:       #ef4444;
+    --amber:     #f59e0b;
+    --radius:    10px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+  }
+  header p { color: var(--muted); margin-top: 6px; font-size: 0.9rem; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    max-width: 760px;
+    margin: 0 auto 24px;
+  }
+
+  label { display: block; font-size: 0.8rem; font-weight: 600;
+          letter-spacing: 0.05em; color: var(--muted); margin-bottom: 6px; }
+
+  select, textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.95rem;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { min-height: 160px; resize: vertical; font-family: inherit; line-height: 1.5; }
+
+  .row { display: flex; gap: 16px; align-items: flex-end; }
+  .row .ticker-wrap { flex: 0 0 180px; }
+  .row .news-wrap   { flex: 1; }
+
+  button {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--accent);
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  button:hover { opacity: .85; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ── spinner ── */
+  .spinner {
+    display: none;
+    width: 28px; height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    margin: 24px auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── result card ── */
+  #result { display: none; }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .badge-strong_buy   { background: #14532d; color: #4ade80; }
+  .badge-buy          { background: #166534; color: #86efac; }
+  .badge-hold         { background: #451a03; color: #fbbf24; }
+  .badge-sell         { background: #7f1d1d; color: #fca5a5; }
+  .badge-strong_sell  { background: #450a0a; color: #f87171; }
+
+  .impact-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+  }
+  .impact-positive { background: var(--green); }
+  .impact-neutral  { background: var(--muted); }
+  .impact-negative { background: var(--red); }
+
+  .ticker-label {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .forecast {
+    margin-left: auto;
+    text-align: right;
+  }
+  .forecast .value {
+    font-size: 1.5rem;
+    font-weight: 800;
+  }
+  .forecast .label { font-size: 0.72rem; color: var(--muted); }
+
+  .confidence-bar {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .confidence-bar span { font-size: 0.8rem; color: var(--muted); margin-right: 6px; }
+  .pip {
+    width: 20px; height: 8px;
+    border-radius: 3px;
+    background: var(--border);
+  }
+  .pip.filled { background: var(--accent); }
+
+  .reasoning {
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .factors-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 540px) { .factors-grid { grid-template-columns: 1fr; } }
+
+  .factors-block h4 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .factors-block.key   h4 { color: var(--green); }
+  .factors-block.risk  h4 { color: var(--red); }
+
+  .factors-block ul { list-style: none; }
+  .factors-block ul li {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+  }
+  .factors-block ul li:last-child { border-bottom: none; }
+  .factors-block ul li::before { flex-shrink: 0; font-size: 0.85rem; }
+  .factors-block.key  ul li::before { content: '✦'; color: var(--green); }
+  .factors-block.risk ul li::before { content: '⚠'; color: var(--red); }
+
+  .meta-row { font-size: 0.75rem; color: var(--muted); margin-top: 16px; }
+
+  .error-msg {
+    display: none;
+    background: #450a0a;
+    border: 1px solid var(--red);
+    border-radius: var(--radius);
+    color: #fca5a5;
+    padding: 14px 18px;
+    max-width: 760px;
+    margin: 0 auto 24px;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Stock News Analyzer</h1>
+  <p>ML-powered next-day price impact assessment</p>
+</header>
+
+<div class="card">
+  <div class="row">
+    <div class="ticker-wrap">
+      <label for="ticker">Ticker</label>
+      <select id="ticker"></select>
+    </div>
+    <div class="news-wrap">
+      <label for="news">News article text</label>
+      <textarea id="news" placeholder="Paste the full news article here…"></textarea>
+    </div>
+  </div>
+  <button id="submit-btn" onclick="analyze()">Analyze</button>
+</div>
+
+<div class="spinner" id="spinner"></div>
+<div class="error-msg" id="error-msg"></div>
+
+<div class="card" id="result">
+  <div class="result-header">
+    <span class="ticker-label" id="r-ticker"></span>
+    <span class="badge" id="r-rec"></span>
+    <span id="r-impact"></span>
+    <div class="forecast" id="r-forecast-wrap">
+      <div class="value" id="r-forecast"></div>
+      <div class="label">ML forecast (next-day %Δ)</div>
+    </div>
+  </div>
+
+  <div class="confidence-bar">
+    <span>Conviction</span>
+    <div class="pip" id="pip1"></div>
+    <div class="pip" id="pip2"></div>
+    <div class="pip" id="pip3"></div>
+    <div class="pip" id="pip4"></div>
+    <div class="pip" id="pip5"></div>
+  </div>
+
+  <p class="reasoning" id="r-reasoning"></p>
+
+  <div class="factors-grid">
+    <div class="factors-block key">
+      <h4>Key Drivers</h4>
+      <ul id="r-key"></ul>
+    </div>
+    <div class="factors-block risk">
+      <h4>Risk Factors</h4>
+      <ul id="r-risk"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Load tickers ──────────────────────────────────────────────────────────────
+fetch('/tickers')
+  .then(r => r.json())
+  .then(tickers => {
+    const sel = document.getElementById('ticker');
+    tickers.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = t;
+      sel.appendChild(opt);
+    });
+  });
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+async function analyze() {
+  const ticker   = document.getElementById('ticker').value;
+  const newsText = document.getElementById('news').value.trim();
+
+  if (!newsText) { showError('Please paste a news article.'); return; }
+
+  setLoading(true);
+  hideError();
+  document.getElementById('result').style.display = 'none';
+
+  try {
+    const res = await fetch('/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticker, news_text: newsText }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || res.statusText);
+    }
+
+    const data = await res.json();
+    renderResult(data);
+  } catch (e) {
+    showError('Error: ' + e.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderResult(d) {
+  // Ticker + recommendation badge
+  document.getElementById('r-ticker').textContent = d.ticker;
+
+  const rec = document.getElementById('r-rec');
+  rec.textContent = d.recommendation.replace('_', ' ');
+  rec.className   = 'badge badge-' + d.recommendation;
+
+  // Price impact
+  const impact = document.getElementById('r-impact');
+  const dot    = `<span class="impact-dot impact-${d.price_impact}"></span>`;
+  impact.innerHTML = dot + d.price_impact;
+
+  // Forecast
+  const fwrap = document.getElementById('r-forecast-wrap');
+  const fval  = document.getElementById('r-forecast');
+  if (d.model_forecast_pct !== null && d.model_forecast_pct !== undefined) {
+    const pct  = (d.model_forecast_pct * 100).toFixed(3);
+    const sign = d.model_forecast_pct >= 0 ? '+' : '';
+    fval.textContent  = sign + pct + '%';
+    fval.style.color  = d.model_forecast_pct >= 0 ? 'var(--green)' : 'var(--red)';
+    fwrap.style.display = 'block';
+  } else {
+    fwrap.style.display = 'none';
+  }
+
+  // Confidence pips
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('pip' + i).className =
+      'pip' + (i <= d.confidence ? ' filled' : '');
+  }
+
+  // Reasoning
+  document.getElementById('r-reasoning').textContent = d.reasoning;
+
+  // Key factors
+  const kul = document.getElementById('r-key');
+  kul.innerHTML = '';
+  (d.key_factors || []).forEach(f => {
+    const li = document.createElement('li');
+    li.textContent = f;
+    kul.appendChild(li);
+  });
+
+  // Risk factors
+  const rul = document.getElementById('r-risk');
+  rul.innerHTML = '';
+  (d.risk_factors || []).forEach(f => {
+    const li = document.createElement('li');
+    li.textContent = f;
+    rul.appendChild(li);
+  });
+
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function setLoading(on) {
+  document.getElementById('spinner').style.display = on ? 'block' : 'none';
+  document.getElementById('submit-btn').disabled   = on;
+}
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent    = msg;
+  el.style.display  = 'block';
+}
+function hideError() {
+  document.getElementById('error-msg').style.display = 'none';
+}
+</script>
+</body>
+</html>
