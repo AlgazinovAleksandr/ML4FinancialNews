@@ -1,0 +1,21 @@
+{
+  "best_clf_name": "DecisionTree",
+  "n_components": 150,
+  "text_col": "title + description + maintext",
+  "target": "direction",
+  "split": {
+    "train": 76192,
+    "val": 4233,
+    "test": 4233,
+    "method": "stratified_random_90_5_5"
+  },
+  "val_f1": 0.6849928080549784,
+  "test_metrics": {
+    "Accuracy": 0.531065,
+    "Precision": 0.524453,
+    "Recall": 0.977106,
+    "F1": 0.682552,
+    "ROC-AUC": 0.54714,
+    "PR-AUC": 0.563384
+  }
+}

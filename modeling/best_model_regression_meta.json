@@ -1,0 +1,22 @@
+{
+  "best_method": "Baseline (no text) -- CatBoost",
+  "model_type": "catboost",
+  "text_col": "maintext",
+  "target": "next_curr_per_change",
+  "split": {
+    "train": 73919,
+    "val": 4107,
+    "test": 4107,
+    "method": "ticker_stratified_random_90_5_5"
+  },
+  "metrics": {
+    "RMSE": 0.006649,
+    "MAE": 0.00384,
+    "Median AE": 0.002055,
+    "Max Error": 0.0532,
+    "R2": 0.849177,
+    "Expl. Var.": 0.849184,
+    "Dir. Accuracy": 0.912799,
+    "IC (Spearman)": 0.923628
+  }
+}
