@@ -1,6 +1,5 @@
 """
-main.py — CLI entry point
-Usage:
+Usage EXAMPLE (обожаю примеры с ними так хорошо а без них так тяжело):
     python -m agent.main --ticker AAPL --news "Apple reported record quarterly revenue..."
     python    agent/main.py --ticker AAPL --news "..."
 """

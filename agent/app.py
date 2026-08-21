@@ -11,6 +11,8 @@ Run via Docker (build from project root):
         -v $(pwd)/data:/app/data \
         --env-file agent/.env \
         ml4fin-agent
+
+TODO: fix Docker if this is even possible (I remember how we messed up with the cosmetics)
 """
 
 import json
